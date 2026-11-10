@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vision Poll</title>
+<meta name="theme-color" content="#1877F2">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Vision Poll">
+<meta property="og:title" content="Vote on this poll - Vision Poll">
+<meta property="og:description" content="Someone shared a poll with you. Tap to cast your vote.">
+<meta property="og:image" content="https://YOUR-HOSTED-URL/og-image.png">
+<style>html,body{margin:0;width:100dvw;height:100dvh;display:grid;place-items:center;background:#1877F2;color:#fff;font:1rem Roboto,system-ui,sans-serif;font-size:19px}</style>
+<script>
+/* Routes pretty poll URLs (/Vision-Poll/p/ID) into the app. Hash fallback: /#/p/ID */
+(function(){var l=location,seg=l.hostname.indexOf('github.io')>-1?1:0;
+var base=l.pathname.split('/').slice(0,1+seg).join('/')+'/';
+var rest=l.pathname.slice(base.length)+l.search;
+l.replace(l.origin+base+'?r='+encodeURIComponent('/'+rest)+l.hash)})();
+</script>
+</head>
+<body><p>Opening poll...</p></body>
+</html>

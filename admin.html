@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Vision Poll Admin</title>
+<meta name="theme-color" content="#1877F2">
+<meta name="robots" content="noindex">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:19px}html,body{width:100dvw;height:100dvh;overflow:hidden}
+body{display:flex;flex-direction:column;font-family:Roboto,system-ui,sans-serif;line-height:1.5;background:#F5F8FF;color:#1A1D24}
+header{display:flex;align-items:center;justify-content:center;min-height:64px;padding-top:env(safe-area-inset-top);background:#1877F2;color:#fff;font-size:1.25rem;font-weight:500;flex:none}
+#v{flex:1;overflow-y:auto;padding:16px}
+.card{background:#fff;border:1px solid #C5CEDD;border-radius:24px;padding:20px;margin-bottom:16px}
+.card h2{font-size:1.15rem;margin-bottom:4px;word-break:break-word}.card p{color:#4B5565;word-break:break-word}
+label{display:block;margin:12px 0 4px;color:#4B5565}
+input{width:100%;min-height:52px;padding:0 14px;font:inherit;border:1px solid #C5CEDD;border-radius:14px;background:#E8EEFA;color:#1A1D24}
+.b{min-height:48px;padding:0 20px;margin:8px 8px 0 0;border:0;border-radius:24px;font:inherit;font-weight:500;background:#E8EEFA;color:#1A1D24}
+.p{background:#1877F2;color:#fff}.g{background:#D6E4FF}.r{background:#FFDAD6;color:#93000A}
+.tag{display:inline-block;padding:2px 12px;border-radius:12px;background:#D6E4FF;font-size:1rem;margin-top:6px}
+nav{display:flex;flex:none;background:#E8EEFA;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;min-height:64px;border:0;background:none;font:inherit;color:#4B5565}nav .on{color:#1877F2;font-weight:700}
+.dlg{position:fixed;inset:0;width:100dvw;height:100dvh;background:#000a;z-index:99;display:grid;place-items:center;padding:24px}.dlg .card{width:100%;margin:0}
+</style>
+</head>
+<body>
+<header>Vision Poll Admin</header>
+<div id="v"></div>
+<nav id="n" style="display:none"><button data-t="pending">Pending</button><button data-t="users">Users</button><button data-t="polls">Polls</button><button data-t="out">Sign out</button></nav>
+<script>
+(function(){
+var V=document.getElementById('v'),N=document.getElementById('n'),API=localStorage.getItem('vp_api')||'',PW=sessionStorage.getItem('vpa')||'',tab='pending';
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function dlg(t,m,b){b=b||['OK'];return new Promise(function(r){var d=document.createElement('div');d.className='dlg';d.innerHTML='<div class="card"><h2>'+t+'</h2><p>'+m+'</p><div></div></div>';b.forEach(function(x,i){var e=document.createElement('button');e.className='b'+(i==b.length-1?' p':'');e.textContent=x;e.onclick=function(){d.remove();r(i)};d.querySelector('div div').appendChild(e)});document.body.appendChild(d)})}
+function call(a,d){d=d||{};d.action=a;d.pw=PW;return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(d)}).then(function(r){return r.json()}).catch(function(){return{ok:false,msg:'Could not reach the server. Check the backend URL.'}})}
+function login(){N.style.display='none';V.innerHTML='<div class="card"><h2>Admin sign in</h2><label>Backend URL<input id="u" value="'+esc(API)+'" placeholder="https://script.google.com/macros/s/.../exec"></label><label>Admin password<input id="p" type="password"></label><button class="b p" id="go">Sign in</button></div>';
+document.getElementById('go').onclick=function(){API=document.getElementById('u').value.trim();PW=document.getElementById('p').value;if(!API||!PW)return dlg('Missing details','Enter the backend URL and your admin password.');
+call('adminUsers').then(function(r){if(!r.ok)return dlg('Could not sign in',esc(r.msg));localStorage.setItem('vp_api',API);sessionStorage.setItem('vpa',PW);N.style.display='flex';show('pending')})}}
+function show(t){tab=t;[].forEach.call(N.children,function(b){b.className=b.dataset.t==t?'on':''});
+if(t=='out'){sessionStorage.removeItem('vpa');PW='';return login()}
+V.innerHTML='<div class="card"><p>Loading...</p></div>';
+if(t=='polls')return call('adminPolls').then(function(r){if(!r.ok)return dlg('Error',esc(r.msg));V.innerHTML=r.polls.map(function(p){return'<div class="card"><h2>'+esc(p.title)+'</h2><p>'+esc(p.owner)+'</p><span class="tag">'+esc(p.status)+' &middot; '+p.votes+' votes</span><div><button class="b g" data-ps="'+p.id+'" data-s="'+(p.status=='Live'?'Closed':'Live')+'">'+(p.status=='Live'?'Close':'Reopen')+'</button><button class="b r" data-ps="'+p.id+'" data-s="Delete">Delete</button></div></div>'}).join('')||'<div class="card"><p>No polls yet.</p></div>'});
+call('adminUsers').then(function(r){if(!r.ok)return dlg('Error',esc(r.msg));var u=r.users.filter(function(x){return t=='users'||x.status=='Pending'});
+V.innerHTML=u.map(function(x){return'<div class="card"><h2>'+esc(x.name)+'</h2><p>'+esc(x.email)+'<br>'+esc(x.country)+'</p><span class="tag">'+esc(x.status)+'</span><div>'+(x.status!='Active'?'<button class="b p" data-u="'+x.id+'" data-s="Active">Approve</button>':'')+(x.status=='Pending'?'<button class="b g" data-u="'+x.id+'" data-s="Rejected">Reject</button>':'')+(x.status=='Active'?'<button class="b g" data-u="'+x.id+'" data-s="Suspended">Suspend</button>':'')+'<button class="b r" data-u="'+x.id+'" data-s="Delete">Delete</button></div></div>'}).join('')||'<div class="card"><p>'+(t=='users'?'No users yet.':'No one is waiting for approval.')+'</p></div>'})}
+N.onclick=function(e){var b=e.target.closest('button');if(b)show(b.dataset.t)};
+V.onclick=function(e){var b=e.target.closest('button');if(!b)return;var d=b.dataset;
+if(d.u)(d.s=='Delete'?dlg('Delete user','This permanently removes the account.',['Cancel','Delete']):Promise.resolve(1)).then(function(k){if(!k)return;call(d.s=='Delete'?'adminDeleteUser':'adminSetUser',{id:d.u,status:d.s}).then(function(r){r.ok?show(tab):dlg('Error',esc(r.msg))})});
+if(d.ps)(d.s=='Delete'?dlg('Delete poll','This permanently removes the poll.',['Cancel','Delete']):Promise.resolve(1)).then(function(k){if(!k)return;call('adminSetPoll',{id:d.ps,status:d.s}).then(function(r){r.ok?show(tab):dlg('Error',esc(r.msg))})})};
+if(API&&PW){N.style.display='flex';show('pending')}else login();
+})();
+</script>
+</body>
+</html>

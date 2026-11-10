@@ -1,0 +1,16 @@
+{
+  "name": "Vision Poll",
+  "short_name": "Vision Poll",
+  "description": "Create, share and vote on polls with people around the world.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1877F2",
+  "theme_color": "#1877F2",
+  "icons": [
+    {"src": "https://YOUR-HOSTED-URL/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "https://YOUR-HOSTED-URL/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "https://YOUR-HOSTED-URL/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
