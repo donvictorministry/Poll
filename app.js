@@ -70,11 +70,14 @@ else if(b.id=='pub')publish();
 else if(d.star){var c=b.closest('[data-q]');c.dataset.val=d.star;[].forEach.call(c.querySelectorAll('[data-star]'),function(x){x.classList.toggle('on',+x.dataset.star<=+d.star)})}};
 V.oninput=function(e){var t=e.target;if(t.id&&t.id in P)P[t.id]=t.value;var c=t.closest('[data-i]');if(c&&t.dataset.k)Q[c.dataset.i][t.dataset.k]=t.value};
 V.onchange=function(e){var t=e.target;if(t.id=='pv')P.pv=t.value;if(t.dataset.k=='y'){Q[t.closest('[data-i]').dataset.i].y=t.value;draw()}};
-function tg(el,on){el.classList.toggle('on',on);$('#scrim').classList.toggle('on',$('#left').classList.contains('on')||$('#right').classList.contains('on'))}
+var dh=0,skip=0;
+function tg(el,on){el.classList.toggle('on',on);var any=$('#left').classList.contains('on')||$('#right').classList.contains('on');$('#scrim').classList.toggle('on',any);if(on&&!dh){history.pushState({d:1},'');dh=1}else if(!any)dh=0}
+function closeD(){var had=dh;tg($('#left'),false);tg($('#right'),false);if(had){skip=1;history.back()}}
+addEventListener('popstate',function(){if(skip){skip=0;return}if(dh){dh=0;tg($('#left'),false);tg($('#right'),false)}});
 $('#menuBtn').onclick=function(){tg($('#right'),false);tg($('#left'),true)};
 $('#dotsBtn').onclick=function(){tg($('#left'),false);tg($('#right'),true)};
-$('#scrim').onclick=function(){tg($('#left'),false);tg($('#right'),false)};
-$('#left').onclick=function(e){if(e.target.closest('button'))tg($('#left'),false)};
+$('#scrim').onclick=closeD;
+$('#left').onclick=function(e){var b=e.target.closest('button');if(!b)return;if(b.dataset.close)closeD();else tg($('#left'),false)};
 function page(title,html){var p=document.createElement('div');p.className='page';p.innerHTML='<div class="bar"><button class="ib back" aria-label="Back">'+ic('back')+'</button><h1>'+title+'</h1><span style="width:48px"></span></div><div class="body">'+html+'</div>';document.body.appendChild(p);history.pushState({vp:1},'');
 var c=function(){p.remove();removeEventListener('popstate',c);tg($('#right'),true)};addEventListener('popstate',c);$('.back',p).onclick=function(){history.back()};return p}
 function todo(){var L=[];try{L=JSON.parse(localStorage.getItem('vp_todo'))||[]}catch(e){}
@@ -85,7 +88,7 @@ $('#ta',p).onclick=add;$('#ti',p).onkeydown=function(e){if(e.key=='Enter')add()}
 p.onclick=function(e){var b=e.target.closest('[data-d]');if(b){L.splice(+b.dataset.d,1);sv()}};
 p.onchange=function(e){var c=e.target.dataset.c;if(c!=null){L[+c].d=e.target.checked?1:0;sv()}};sv()}
 $('#right').onclick=function(e){var b=e.target.closest('button');if(!b)return;var a=b.dataset.a;
-if(b.dataset.close)tg($('#right'),false);
+if(b.dataset.close)closeD();
 else if(a=='todo'){tg($('#right'),false);todo()}
 else if(a=='install'){tg($('#right'),false);if(dp){dp.prompt();dp=null}else if(matchMedia('(display-mode:standalone)').matches)dlg('Already installed','Vision Poll is installed on this phone.');else dlg('Install Vision Poll','Open the Chrome menu and tap <b>Add to Home screen</b> or <b>Install app</b>.')}
 else if(a=='share'){tg($('#right'),false);if(navigator.share)navigator.share({title:'Vision Poll',text:'Create, share and vote on polls with Vision Poll.',url:BASE}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(BASE).then(function(){dlg('Link copied','The app link is ready to paste:<br><b>'+esc(BASE)+'</b>')});else dlg('Share Vision Poll','Copy this link:<br><b>'+esc(BASE)+'</b>')}};
