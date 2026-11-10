@@ -85,7 +85,8 @@ $('#ta',p).onclick=add;$('#ti',p).onkeydown=function(e){if(e.key=='Enter')add()}
 p.onclick=function(e){var b=e.target.closest('[data-d]');if(b){L.splice(+b.dataset.d,1);sv()}};
 p.onchange=function(e){var c=e.target.dataset.c;if(c!=null){L[+c].d=e.target.checked?1:0;sv()}};sv()}
 $('#right').onclick=function(e){var b=e.target.closest('button');if(!b)return;var a=b.dataset.a;
-if(a=='todo'){tg($('#right'),false);todo()}
+if(b.dataset.close)tg($('#right'),false);
+else if(a=='todo'){tg($('#right'),false);todo()}
 else if(a=='install'){tg($('#right'),false);if(dp){dp.prompt();dp=null}else if(matchMedia('(display-mode:standalone)').matches)dlg('Already installed','Vision Poll is installed on this phone.');else dlg('Install Vision Poll','Open the Chrome menu and tap <b>Add to Home screen</b> or <b>Install app</b>.')}
 else if(a=='share'){tg($('#right'),false);if(navigator.share)navigator.share({title:'Vision Poll',text:'Create, share and vote on polls with Vision Poll.',url:BASE}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(BASE).then(function(){dlg('Link copied','The app link is ready to paste:<br><b>'+esc(BASE)+'</b>')});else dlg('Share Vision Poll','Copy this link:<br><b>'+esc(BASE)+'</b>')}};
 addEventListener('beforeinstallprompt',function(e){e.preventDefault();dp=e});
