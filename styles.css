@@ -30,9 +30,9 @@ input[type=range]{padding:0;min-height:32px;accent-color:var(--p)}
 .nav .on{color:var(--p);font-weight:600}
 .scrim{position:fixed;inset:0;background:#0008;opacity:0;pointer-events:none;transition:.25s;z-index:20}
 .scrim.on{opacity:1;pointer-events:auto}
-.drawer{position:fixed;inset:0;height:100dvh;width:100dvw;background:var(--sf);z-index:30;overflow-y:auto;padding:0 0 12px;visibility:hidden;transition:transform .28s ease,visibility 0s linear .28s}
+.drawer{position:fixed;inset:0;height:100dvh;width:100dvw;background:var(--sf);z-index:30;overflow-y:auto;padding:0 0 12px;visibility:hidden;will-change:transform;backface-visibility:hidden;opacity:1;transition:transform .45s cubic-bezier(.22,.8,.3,1),visibility 0s linear .45s}
 .left{transform:translateX(-100%)}.right{transform:translateX(100%)}
-.drawer.on{transform:none;visibility:visible;transition:transform .28s ease}
+.drawer.on{transform:none;visibility:visible;transition:transform .45s cubic-bezier(.22,.8,.3,1)}
 .scrim{display:none!important}
 .drawer .dh{display:flex;align-items:center;min-height:64px;padding:env(safe-area-inset-top) 4px 0;background:var(--p);color:var(--op);margin-bottom:8px}
 .drawer .dh h3{padding:0 8px;font-size:1.25rem;font-weight:500;color:inherit}
@@ -41,7 +41,7 @@ input[type=range]{padding:0;min-height:32px;accent-color:var(--p)}
 .drawer button,.drawer .it{display:flex;align-items:center;gap:16px;width:100%;min-height:56px;padding:0 16px;border:0;border-radius:28px;background:none;color:var(--tx);font:inherit;text-align:left}
 .drawer .it input[type=checkbox]{margin-left:auto}
 .drawer button:active{background:var(--pc)}
-.page{position:fixed;inset:0;width:100dvw;height:100dvh;background:var(--bg);z-index:50;display:flex;flex-direction:column}
+.page{animation:pi .45s cubic-bezier(.22,.8,.3,1);will-change:transform;backface-visibility:hidden;position:fixed;inset:0;width:100dvw;height:100dvh;background:var(--bg);z-index:50;display:flex;flex-direction:column}
 .page .body{flex:1;overflow-y:auto;padding:16px}
 .dlg{position:fixed;inset:0;width:100dvw;height:100dvh;background:#000a;z-index:99;display:grid;place-items:center;padding:24px}
 .dlg .card{width:100%;margin:0;word-break:break-word}
@@ -52,3 +52,7 @@ input[type=range]{padding:0;min-height:32px;accent-color:var(--p)}
 .stars svg{width:1.7rem;height:1.7rem}.stars .on{color:#F5A623}
 .spin{width:48px;height:48px;border:5px solid var(--pc);border-top-color:var(--p);border-radius:50%;animation:s 1s linear infinite;margin:0 auto 12px}
 @keyframes s{to{transform:rotate(360deg)}}
+
+.page.vo{animation:po .35s cubic-bezier(.4,0,.8,.4) forwards}
+@keyframes pi{from{transform:translateX(100%)}to{transform:none}}
+@keyframes po{to{transform:translateX(100%)}}
