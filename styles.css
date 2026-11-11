@@ -33,7 +33,6 @@ input[type=range]{padding:0;min-height:32px;accent-color:var(--p)}
 .drawer{position:fixed;inset:0;height:100dvh;width:100dvw;background:var(--sf);z-index:30;overflow-y:auto;padding:0 0 12px;visibility:hidden;will-change:transform;backface-visibility:hidden;opacity:1;transition:transform .45s cubic-bezier(.22,.8,.3,1),visibility 0s linear .45s}
 .left{transform:translateX(-100%)}.right{transform:translateX(100%)}
 .drawer.on{transform:none;visibility:visible;transition:transform .45s cubic-bezier(.22,.8,.3,1)}
-.scrim{display:none!important}
 .drawer .dh{display:flex;align-items:center;min-height:64px;padding:env(safe-area-inset-top) 4px 0;background:var(--p);color:var(--op);margin-bottom:8px}
 .drawer .dh h3{padding:0 8px;font-size:1.25rem;font-weight:500;color:inherit}
 .drawer .dh button{width:48px;min-height:48px;padding:0;justify-content:center;color:inherit;border-radius:50%}
@@ -56,3 +55,5 @@ input[type=range]{padding:0;min-height:32px;accent-color:var(--p)}
 .page.vo{animation:po .35s cubic-bezier(.4,0,.8,.4) forwards}
 @keyframes pi{from{transform:translateX(100%)}to{transform:none}}
 @keyframes po{to{transform:translateX(100%)}}
+.lock{position:fixed;inset:0;width:100dvw;height:100dvh;z-index:200;background:var(--p);color:var(--op);display:grid;place-items:center;text-align:center;padding:32px}
+.lock h2{font-size:1.5rem;margin-bottom:12px}
