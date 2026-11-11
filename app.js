@@ -1,16 +1,21 @@
 (function(){
 'use strict';
-var API=localStorage.getItem('vp_api')||'PASTE_YOUR_GAS_WEB_APP_URL_HERE';
+var A=window.VPAPI;
 var BASE=new URL('./',document.currentScript.src).href;
 var V=document.getElementById('view'),U=null,tab='home',tm=0,dp=null,Q=[],P={pt:'',pd:'',pv:'Public'};
-try{U=JSON.parse(localStorage.getItem('vp_user'))}catch(e){}
+try{U=JSON.parse(localStorage.getItem('vp_s'))}catch(e){}
+if(U&&!(U.exp>Date.now()))clr();
+var MSG=[],NOTE='';
+function au(){return{email:U.email,tk:U.tk,dev:key()}}
+function clr(){U=null;localStorage.removeItem('vp_s')}
+function lockUI(m){var d=document.createElement('div');d.className='lock';d.innerHTML='<div><h2>Vision Poll</h2><p>'+esc(m)+'</p></div>';document.body.appendChild(d)}
 function $(s,r){return(r||document).querySelector(s)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function ic(n){return '<svg viewBox="0 0 24 24"><use href="#i-'+n+'"/></svg>'}
 function key(){var k=localStorage.getItem('vp_key');if(!k){k=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('vp_key',k)}return k}
 function link(id){return BASE+'p/'+id}
 function dlg(t,m,b){b=b||['OK'];return new Promise(function(r){var d=document.createElement('div');d.className='dlg';d.innerHTML='<div class="card"><h2>'+t+'</h2><p>'+m+'</p><div class="row"></div></div>';var w=$('.row',d);b.forEach(function(x,i){var e=document.createElement('button');e.className='btn '+(i==b.length-1?'pri':'txt');e.textContent=x;e.onclick=function(){d.remove();r(i)};w.appendChild(e)});document.body.appendChild(d)})}
-function call(a,d){d=d||{};d.action=a;return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(d)}).then(function(r){return r.json()}).catch(function(){return{ok:false,msg:'Could not reach the server. Check your connection and the backend URL.'}})}
+function call(a,d){return A.call(a,d).then(function(r){if(r.off)lockUI(r.msg);if(r.expired&&U){clr();NOTE='Your session has ended. Please verify your identity again.'}return r})}
 function load(){V.innerHTML='<div class="pad"><div class="spin"></div></div>'}
 function fail(r){V.innerHTML='<div class="pad"><div class="card"><h2>Something went wrong</h2><p>'+esc(r.msg)+'</p></div></div>'}
 var T=[['home','home','Explore'],['mine','poll','My Polls'],['create','add','Create'],['acct','person','Account']];
@@ -18,29 +23,36 @@ function nav(){$('#nav').innerHTML=T.map(function(t){return'<button data-t="'+t[
 $('#nav').onclick=function(e){var b=e.target.closest('button');if(b)go(b.dataset.t)};
 function go(t,a){clearInterval(tm);tab=t;nav();V.scrollTop=0;({home:home,mine:mine,create:create,acct:acct,vote:vote,res:res})[t](a)}
 function need(f){if(!U){dlg('Login needed','Please log in or register first.').then(function(){go('acct')});return}
-call('login',U).then(function(r){if(!r.ok||r.status!='Active'){go('acct');return}f()})}
+call('me',au()).then(function(r){if(!r.ok||r.status!='Active'){go('acct');return}f()})}
 function pc(p,own){return'<div class="card"><h2>'+esc(p.title)+'</h2><p>'+esc(p.desc||'')+'</p><p>'+p.votes+' votes &middot; '+esc(p.status)+'</p><div class="row"><button class="btn pri" data-v="'+p.id+'">Vote</button><button class="btn tonal" data-r="'+p.id+'">Results</button><button class="btn" data-share-poll="'+p.id+'" data-title="'+esc(p.title)+'">'+ic('share')+'Share</button>'+(own?'<button class="btn" data-s="'+p.id+'" data-st="'+p.status+'">'+(p.status=='Live'?'Close':'Reopen')+'</button>':'')+'</div></div>'}
-function home(){load();call('publicPolls').then(function(r){if(!r.ok)return fail(r);V.innerHTML='<div class="pad">'+(U?'':'<div class="card"><h2>Welcome to Vision Poll</h2><p>Vote on any poll. To create polls, register for a free account. New accounts are approved by the admin.</p><button class="btn pri" data-t2="acct">Log in or register</button></div>')+(r.polls.map(function(p){return pc(p)}).join('')||'<p class="mut">No public polls yet. Be the first to create one.</p>')+'</div>'})}
-function mine(){need(function(){load();call('myPolls',U).then(function(r){if(!r.ok)return fail(r);V.innerHTML='<div class="pad">'+(r.polls.map(function(p){return pc(p,1)}).join('')||'<p class="mut">You have no polls yet. Tap Create to make one.</p>')+'</div>'})})}
-function form(reg){V.innerHTML='<div class="pad"><div class="card"><h2>'+(reg?'Create account':'Welcome back')+'</h2>'+(reg?'<label>Full name<input id="n"></label><label>Country<input id="c"></label>':'')+'<label>Email<input id="e" type="email"></label><label>Password<input id="p" type="password"></label><button class="btn pri" id="go">'+(reg?'Register':'Log in')+'</button><button class="btn txt" id="sw">'+(reg?'I already have an account':'New here? Register')+'</button></div></div>';
+function home(){load();call('publicPolls').then(function(r){if(!r.ok)return fail(r);V.innerHTML='<div class="pad">'+(U?'':'<div class="card"><h2>Welcome to Vision Poll</h2><p>Vote on any poll. To create polls, register for a free account. New accounts are approved by the admin.</p><button class="btn pri" data-t2="acct">Log in or register</button></div>')+(r.polls.map(function(p){return pc(p)}).join('')||'<p class="mut">No public polls yet. Be the first to create one.</p>')+'<div class="card"><h2>Enjoying Vision Poll?</h2><div class="row"><button class="btn tonal" id="lk">'+ic('heart')+(localStorage.getItem('vp_liked')?'Liked':'Like')+'</button><button class="btn" id="sh2">'+ic('share')+'Share</button></div></div></div>'})}
+function mine(){need(function(){load();call('myPolls',au()).then(function(r){if(!r.ok)return fail(r);V.innerHTML='<div class="pad">'+(r.polls.map(function(p){return pc(p,1)}).join('')||'<p class="mut">You have no polls yet. Tap Create to make one.</p>')+'</div>'})})}
+function mask(e){var p=e.split('@');return p[0].slice(0,1)+'***@'+p[1]}
+function form(reg,note){V.innerHTML='<div class="pad"><div class="card"><h2>'+(reg?'Create account':'Welcome back')+'</h2>'+(note?'<p>'+esc(note)+'</p>':'')+(reg?'<label>Full name<input id="n" autocomplete="name"></label><label>Country<input id="c"></label>':'')+'<label>Email<input id="e" type="email" autocomplete="email"></label><label>Password<input id="p" type="password" autocomplete="'+(reg?'new-password':'current-password')+'"></label><button class="btn pri" id="go">'+(reg?'Register':'Log in')+'</button><button class="btn txt" id="sw">'+(reg?'I already have an account':'New here? Register')+'</button></div></div>';
 $('#sw').onclick=function(){form(!reg)};
-$('#go').onclick=function(){var d={email:$('#e').value.trim(),password:$('#p').value};if(reg){d.name=$('#n').value.trim();d.country=$('#c').value.trim()}
+$('#go').onclick=function(){var d={email:$('#e').value.trim(),password:$('#p').value,dev:key()};if(reg){d.name=$('#n').value.trim();d.country=$('#c').value.trim()}
 if(!d.email||!d.password||(reg&&!d.name))return dlg('Missing details','Please fill in every field.');
-call(reg?'register':'login',d).then(function(r){if(!r.ok)return dlg('Could not continue',esc(r.msg));U={email:d.email,password:d.password};localStorage.setItem('vp_user',JSON.stringify(U));if(reg)dlg('Registration received','Your account is waiting for admin approval. You can start as soon as it is approved.').then(acct);else acct()})}}
-function acct(){if(!U)return form(0);load();call('login',U).then(function(r){
-if(!r.ok){U=null;localStorage.removeItem('vp_user');return form(0)}
+call(reg?'register':'login',d).then(function(r){if(!r.ok)return dlg('Could not continue',esc(r.msg));codeStep(d.email,d.password)})}}
+function codeStep(em,pw){NOTE='';V.innerHTML='<div class="pad"><div class="card"><h2>Verify your identity</h2><p>We sent a 6-digit code to '+esc(mask(em))+'. It expires in 10 minutes.</p><label>6-digit code<input id="cd" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></label><button class="btn pri" id="vf">Verify</button><button class="btn txt" id="rs">Send a new code</button></div></div>';
+$('#rs').onclick=function(){call('login',{email:em,password:pw,dev:key()}).then(function(r){dlg(r.ok?'Code sent':'Could not send',r.ok?'A new code is on its way.':esc(r.msg))})};
+$('#vf').onclick=function(){var c=$('#cd').value.trim();if(!/^\d{6}$/.test(c))return dlg('Check the code','Enter the 6 digits from your email.');
+call('verify',{email:em,code:c,dev:key()}).then(function(r){if(!r.ok)return dlg('Could not verify',esc(r.msg));U={email:em,tk:r.tk,exp:r.exp};localStorage.setItem('vp_s',JSON.stringify(U));msgs();acct()})}}
+function msgs(){if(!U)return;call('myMessages',au()).then(function(r){if(!r.ok)return;MSG=r.msgs;var s=localStorage.getItem('vp_seen'),n=MSG[0];if(n&&n.id!=s){localStorage.setItem('vp_seen',n.id);dlg(esc(n.t),esc(n.x))}})}
+function acct(){if(!U)return form(0,NOTE);load();call('me',au()).then(function(r){
+if(!r.ok){var n=NOTE;return form(0,n)}
 var s=r.status,h='';
-if(s=='Pending'){h='<div class="card" style="text-align:center"><div class="spin"></div><h2>Waiting for approval</h2><p>Your account is being reviewed. This page checks automatically.</p></div>';tm=setInterval(function(){call('login',U).then(function(x){if(x.ok&&x.status!='Pending'){clearInterval(tm);acct();if(x.status=='Active')dlg('Approved','Your account is active. You can now create polls.')}})},8000)}
-else if(s=='Active')h='<div class="card"><h2>'+esc(r.name)+'</h2><p>'+esc(U.email)+'</p><p>Status: Active</p></div>';
+if(s=='Pending'){h='<div class="card" style="text-align:center"><div class="spin"></div><h2>Waiting for approval</h2><p>Your email is verified. The administrator will review your request. This page checks automatically.</p></div>';tm=setInterval(function(){call('me',au()).then(function(x){if(x.ok&&x.status!='Pending'){clearInterval(tm);acct();if(x.status=='Active')dlg('Approved','Your account is active. You can now create polls.')}})},8000)}
+else if(s=='Active')h='<div class="card"><h2>'+esc(r.name)+'</h2><p>Status: Active</p></div>';
 else h='<div class="card"><h2>Account '+esc(s)+'</h2><p>Please contact support for help.</p></div>';
-V.innerHTML='<div class="pad">'+h+'<button class="btn" id="lo">Log out</button></div>';$('#lo').onclick=function(){U=null;localStorage.removeItem('vp_user');form(0)}})}
+h+='<div class="card"><h2>Messages</h2>'+(MSG.map(function(m){return'<p><b>'+esc(m.t)+'</b><br>'+esc(m.x)+'</p>'}).join('')||'<p>No messages yet.</p>')+'</div>';
+V.innerHTML='<div class="pad">'+h+'<button class="btn" id="lo">Log out</button></div>';$('#lo').onclick=function(){var t=au();call('logout',t);clr();MSG=[];form(0)}})}
 function create(){need(function(){Q=[{t:'',y:'single',o:''}];P={pt:'',pd:'',pv:'Public'};draw()})}
 function draw(){var Y=[['single','Single choice'],['multi','Multiple choice'],['rating','Star rating'],['text','Written answer']];
 V.innerHTML='<div class="pad"><div class="card"><h2>New poll</h2><label>Title<input id="pt" value="'+esc(P.pt)+'"></label><label>Description<textarea id="pd">'+esc(P.pd)+'</textarea></label><label>Visibility<select id="pv"><option value="Public"'+(P.pv=='Public'?' selected':'')+'>Public (listed in Explore)</option><option value="Link"'+(P.pv=='Link'?' selected':'')+'>Link only</option></select></label></div>'+Q.map(function(q,i){return'<div class="card" data-i="'+i+'"><h2>Question '+(i+1)+'</h2><label>Question<input data-k="t" value="'+esc(q.t)+'"></label><label>Type<select data-k="y">'+Y.map(function(x){return'<option value="'+x[0]+'"'+(q.y==x[0]?' selected':'')+'>'+x[1]+'</option>'}).join('')+'</select></label>'+(q.y=='single'||q.y=='multi'?'<label>Options (one per line)<textarea data-k="o">'+esc(q.o)+'</textarea></label>':'')+(Q.length>1?'<button class="btn" data-x="'+i+'">'+ic('del')+'Remove</button>':'')+'</div>'}).join('')+'<button class="btn tonal" id="aq">'+ic('add')+'Add question</button><button class="btn pri" id="pub">Publish poll</button></div>'}
 function publish(){var qs=Q.map(function(q){return{t:q.t.trim(),y:q.y,o:(q.o||'').split('\n').map(function(s){return s.trim()}).filter(Boolean)}});
 if(!P.pt.trim())return dlg('Title needed','Give your poll a title.');
 for(var i=0;i<qs.length;i++){if(!qs[i].t)return dlg('Question needed','Question '+(i+1)+' has no text.');if((qs[i].y=='single'||qs[i].y=='multi')&&qs[i].o.length<2)return dlg('Options needed','Question '+(i+1)+' needs at least two options.')}
-call('createPoll',Object.assign({title:P.pt.trim(),desc:P.pd.trim(),vis:P.pv,qs:qs},U)).then(function(r){if(!r.ok)return dlg('Could not publish',esc(r.msg));dlg('Poll published','Your poll link:<br><b>'+esc(link(r.id))+'</b><br>Open My Polls to share it.',['View poll']).then(function(){go('vote',r.id)})})}
+call('createPoll',Object.assign({title:P.pt.trim(),desc:P.pd.trim(),vis:P.pv,qs:qs},au())).then(function(r){if(!r.ok)return dlg('Could not publish',esc(r.msg));dlg('Poll published','Your poll link:<br><b>'+esc(link(r.id))+'</b><br>Open My Polls to share it.',['View poll']).then(function(){go('vote',r.id)})})}
 function vote(id){load();call('getPoll',{id:id,key:key()}).then(function(r){if(!r.ok)return fail(r);var p=r.poll,h='<div class="pad"><div class="card"><h2>'+esc(p.title)+'</h2><p>'+esc(p.desc)+'</p></div>';
 if(p.voted||p.status!='Live'){V.innerHTML=h+'<div class="card"><p>'+(p.voted?'You have already voted on this poll.':'This poll is closed.')+'</p><button class="btn pri" data-r="'+id+'">See results</button></div></div>';return}
 p.qs.forEach(function(q,i){h+='<div class="card" data-q="'+i+'"><h2>'+esc(q.t)+'</h2>';
@@ -63,10 +75,13 @@ else h+=(q.x.map(function(t){return'<div class="opt"><span>'+esc(t)+'</span></di
 V.innerHTML=h+'<button class="btn" data-share-poll="'+id+'" data-title="'+esc(r.title)+'">'+ic('share')+'Share poll</button></div>'})}
 V.onclick=function(e){var b=e.target.closest('button');if(!b)return;var d=b.dataset;
 if(d.v)go('vote',d.v);else if(d.r)go('res',d.r);else if(d.t2)go(d.t2);
-else if(d.s)call('setPoll',Object.assign({id:d.s,status:d.st=='Live'?'Closed':'Live'},U)).then(function(){go('mine')});
+else if(d.s)call('setPoll',Object.assign({id:d.s,status:d.st=='Live'?'Closed':'Live'},au())).then(function(){go('mine')});
 else if(d.x){Q.splice(+d.x,1);draw()}
 else if(b.id=='aq'){Q.push({t:'',y:'single',o:''});draw()}
 else if(b.id=='pub')publish();
+else if(b.id=='lk'){if(!localStorage.getItem('vp_liked')){localStorage.setItem('vp_liked','1');b.lastChild.textContent='Liked';track('like')}}
+else if(b.id=='sh2')shareApp();
+else if(d.sharePoll){var u=link(d.sharePoll), t=d.title||'Vision Poll'; track('share_poll'); if(navigator.share)navigator.share({title:t,text:'Vote on this poll:',url:u}).catch(function(){}); else if(navigator.clipboard)navigator.clipboard.writeText(u).then(function(){dlg('Link copied','The poll link is ready to paste:<br><b>'+esc(u)+'</b>')}); else dlg('Share poll','Copy this link:<br><b>'+esc(u)+'</b>');}
 else if(d.star){var c=b.closest('[data-q]');c.dataset.val=d.star;[].forEach.call(c.querySelectorAll('[data-star]'),function(x){x.classList.toggle('on',+x.dataset.star<=+d.star)})}};
 V.oninput=function(e){var t=e.target;if(t.id&&t.id in P)P[t.id]=t.value;var c=t.closest('[data-i]');if(c&&t.dataset.k)Q[c.dataset.i][t.dataset.k]=t.value};
 V.onchange=function(e){var t=e.target;if(t.id=='pv')P.pv=t.value;if(t.dataset.k=='y'){Q[t.closest('[data-i]').dataset.i].y=t.value;draw()}};
@@ -87,11 +102,13 @@ function add(){var i=$('#ti',p),v=i.value.trim();if(v){L.push({t:v,d:0});i.value
 $('#ta',p).onclick=add;$('#ti',p).onkeydown=function(e){if(e.key=='Enter')add()};
 p.onclick=function(e){var b=e.target.closest('[data-d]');if(b){L.splice(+b.dataset.d,1);sv()}};
 p.onchange=function(e){var c=e.target.dataset.c;if(c!=null){L[+c].d=e.target.checked?1:0;sv()}};sv()}
+function shareApp(){track('share');if(navigator.share)navigator.share({title:'Vision Poll',text:'Create, share and vote on polls with Vision Poll.',url:BASE}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(BASE).then(function(){dlg('Link copied','The app link is ready to paste:<br><b>'+esc(BASE)+'</b>')});else dlg('Share Vision Poll','Copy this link:<br><b>'+esc(BASE)+'</b>')}
+function track(ev){var d={event:ev,lang:navigator.language,platform:navigator.platform||'',screen:screen.width+'x'+screen.height,ua:navigator.userAgent};if(U)Object.assign(d,au());return A.geo().then(function(g){d.g=g;return A.call('track',d)})}
 $('#right').onclick=function(e){var b=e.target.closest('button');if(!b)return;var a=b.dataset.a;
 if(b.hasAttribute('data-close'))closeD();
 else if(a=='todo'){tg($('#right'),false);todo()}
 else if(a=='install'){tg($('#right'),false);if(dp){dp.prompt();dp=null}else if(matchMedia('(display-mode:standalone)').matches)dlg('Already installed','Vision Poll is installed on this phone.');else dlg('Install Vision Poll','Open the Chrome menu and tap <b>Add to Home screen</b> or <b>Install app</b>.')}
-else if(a=='share'){tg($('#right'),false);if(navigator.share)navigator.share({title:'Vision Poll',text:'Create, share and vote on polls with Vision Poll.',url:BASE}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(BASE).then(function(){dlg('Link copied','The app link is ready to paste:<br><b>'+esc(BASE)+'</b>')});else dlg('Share Vision Poll','Copy this link:<br><b>'+esc(BASE)+'</b>')}};
+else if(a=='share'){tg($('#right'),false);shareApp()}};
 addEventListener('beforeinstallprompt',function(e){e.preventDefault();dp=e});
 function theme(d){document.documentElement.dataset.theme=d?'dark':'';$('#dk').checked=d;localStorage.setItem('vp_theme',d?1:0)}
 function fsz(n){document.documentElement.style.setProperty('--fs',n+'px');$('#fs').value=n;$('#fv').textContent=n+'px';localStorage.setItem('vp_fs',n)}
@@ -100,5 +117,13 @@ theme(localStorage.getItem('vp_theme')=='1');fsz(Math.min(22,Math.max(19,+localS
 function route(){var m=(location.pathname+location.hash).match(/\/p\/([A-Za-z0-9_-]+)/);m?go('vote',m[1]):go('home')}
 var r=new URLSearchParams(location.search).get('r');if(r)history.replaceState(null,'',BASE+r.replace(/^\//,''));
 addEventListener('hashchange',route);route();
+A.call('status').then(function(r){if(r&&r.on===false)lockUI('Vision Poll is temporarily unavailable. Please check back soon.')});
+if(!sessionStorage.getItem('vp_v')){sessionStorage.setItem('vp_v','1');track('view')}
+msgs();setInterval(msgs,60000);
 if('serviceWorker' in navigator)navigator.serviceWorker.register(BASE+'sw.js').catch(function(){});
 })();
+
+
+
+
+
